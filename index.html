@@ -4,7 +4,17 @@
 'use strict';
 const $=id=>document.getElementById(id), main=$('main'), modal=$('modal');
 const STORAGE='calcotarra.v1';const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const defaultData={songs:[],sets:[],theme:'light',font:16,speed:32};let data=structuredClone(defaultData), storageOK=true;try{let saved=localStorage.getItem(STORAGE);if(saved)data={...data,...JSON.parse(saved)}}catch(e){storageOK=false}function persist(){try{localStorage.setItem(STORAGE,JSON.stringify(data));return true}catch(e){storageOK=false;return false}}
+const defaultData={songs:[],sets:[],theme:'light',font:16,speed:32};let data=structuredClone(defaultData), storageOK=true;try{let saved=localStorage.getItem(STORAGE);if(saved)data={...data,...JSON.parse(saved)}}catch(e){storageOK=false}
+function persist(nextData = data) {
+  try {
+    localStorage.setItem(STORAGE, JSON.stringify(nextData));
+    storageOK = true;
+    return true;
+  } catch {
+    storageOK = false;
+    return false;
+  }
+}
 let page='library', current=null, offset=0, simple=false, capo=0, query='', favorites=false, selectedVersion='', scrolling=false, raf=0, last=0, scrollCarry=0, focus=false;
 const SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];const PC={C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,Fb:4,'E#':5,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11,Cb:11,'B#':0};
 const CHORD=/^([A-G][#b]?)(?:(?:maj|min|dim|aug|sus|add|m|M|ø|°|\+|-|\d|[#b]|\(|\)|omit|no|alt)*)(?:\/[A-G][#b]?)?$/;
@@ -30,9 +40,123 @@ function saveVersion(){let name=prompt('Nom de la versió',`${getVersion()?.key|
 function renderDiscover(){main.innerHTML=`<div class="stack"><h1>Cerca noves cançons</h1><div class="panel stack"><label>Artista i títol<input id="external" placeholder="Alicia Keys Pawn It All"></label><button class="primary" data-action="google">Cerca a Google</button><button data-action="ug">Cerca acords a Ultimate Guitar</button><p class="muted">Obre els resultats, copia els acords i la lletra que tinguis dret a utilitzar i enganxa'ls en una nova cançó. No descarreguem catàlegs automàticament.</p><button data-action="new">＋ Enganxa una cançó</button></div></div>`}
 function renderSets(){main.innerHTML=`<div class="stack"><div class="row between"><h1>Repertoris</h1><button class="primary" data-action="newSet">＋ Repertori</button></div>${data.sets.length?data.sets.map(s=>`<div class="panel stack"><div class="row between"><h2>${esc(s.name)}</h2><button data-delset="${esc(s.id)}">Elimina</button></div>${s.ids.length?s.ids.map((id,i)=>{let song=songBy(id);return song?`<div class="songrow"><button class="songopen" data-open="${esc(id)}"><strong>${esc(song.title)}</strong><small>${esc(song.artist)}</small></button><button data-move="${esc(s.id)}|${i}|-1" ${i===0?'disabled':''}>↑</button><button data-move="${esc(s.id)}|${i}|1" ${i===s.ids.length-1?'disabled':''}>↓</button><button data-remove="${esc(s.id)}|${esc(id)}">×</button></div>`:''}).join(''):'<p class="muted">Repertori buit. Afegeix cançons des de la seva fitxa.</p>'}</div>`).join(''):'<div class="panel muted">Crea un repertori per preparar una sessió o un concert.</div>'}</div>`}
 function createSet(){let name=prompt('Nom del repertori');if(!name?.trim())return null;let s={id:uid(),name:name.trim(),ids:[]};data.sets.push(s);persist();return s}function addSet(){modal.innerHTML=`<div class="stack"><h2>Afegeix al repertori</h2>${data.sets.map(s=>`<button data-putset="${esc(s.id)}">${esc(s.name)}</button>`).join('')}<button data-action="newSetAdd">＋ Nou repertori</button><button data-action="close">Cancel·la</button></div>`;modal.showModal()}
-function renderSettings(){main.innerHTML=`<div class="stack"><h1>Ajustos</h1><div class="panel stack"><h2>Còpies de seguretat</h2><p class="muted">Les cançons es guarden en aquest navegador, no a GitHub. Exporta periòdicament una còpia; esborrar les dades del navegador pot eliminar la biblioteca.</p><button class="primary" data-action="export">Exporta biblioteca JSON</button><button data-action="import">Importa JSON / text / ChordPro</button><p class="muted">La importació JSON fusiona les cançons pel seu identificador.</p></div><div class="panel stack"><h2>Aspecte</h2><button data-action="theme">${data.theme==='dark'?'Mode clar':'Mode fosc'}</button><div class="row"><span>Mida de lletra</span><button data-action="fontDown">−</button><strong>${data.font}px</strong><button data-action="fontUp">＋</button></div></div><div class="panel stack"><h2>Gestiona cançons</h2>${data.songs.map(s=>`<div class="row between"><span>${esc(s.title)}</span><button data-delete="${esc(s.id)}">Elimina</button></div>`).join('')||'<p class="muted">Cap cançó.</p>'}</div><p class="muted">Calçotarra 0.1 · Prototip local. L’afinador necessita permís de micròfon i HTTPS o localhost. La instal·lació i l’ús offline necessiten una publicació web.</p></div>`}
+function renderSettings(){main.innerHTML=`<div class="stack"><h1>Ajustos</h1><div class="panel stack"><h2>Còpies de seguretat</h2><p class="muted">Les cançons es guarden en aquest navegador, no a GitHub. Exporta periòdicament una còpia; esborrar les dades del navegador pot eliminar la biblioteca.</p><button class="primary" data-action="export">Exporta biblioteca JSON</button><button data-action="import">Importa JSON / text / ChordPro</button><p class="muted">La importació JSON afegeix contingut a la biblioteca i conserva els originals i les versions que ja hi tens.</p></div><div class="panel stack"><h2>Aspecte</h2><button data-action="theme">${data.theme==='dark'?'Mode clar':'Mode fosc'}</button><div class="row"><span>Mida de lletra</span><button data-action="fontDown">−</button><strong>${data.font}px</strong><button data-action="fontUp">＋</button></div></div><div class="panel stack"><h2>Gestiona cançons</h2>${data.songs.map(s=>`<div class="row between"><span>${esc(s.title)}</span><button data-delete="${esc(s.id)}">Elimina</button></div>`).join('')||'<p class="muted">Cap cançó.</p>'}</div><p class="muted">Calçotarra 0.1 · Prototip local. L’afinador necessita permís de micròfon i HTTPS o localhost. La instal·lació i l’ús offline necessiten una publicació web.</p></div>`}
 function downloadJSON(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='calcotarra-biblioteca-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let raw=await f.text();if(f.name.endsWith('.json')){let imported=JSON.parse(raw);if(!Array.isArray(imported.songs))throw Error('Format de biblioteca incorrecte');for(let s of imported.songs){if(typeof s.title!=='string'||typeof s.text!=='string')continue;let clean={id:String(s.id||uid()),title:s.title,artist:String(s.artist||''),key:String(s.key||''),source:String(s.source||''),text:s.text,favorite:!!s.favorite,versions:Array.isArray(s.versions)?s.versions.filter(v=>typeof v.text==='string').map(v=>({id:String(v.id||uid()),name:String(v.name||'Versió'),text:v.text,key:String(v.key||''),capo:Number(v.capo)||0})):[]};let i=data.songs.findIndex(x=>x.id===clean.id);if(i<0)data.songs.push(clean);else data.songs[i]=clean}if(Array.isArray(imported.sets))for(let s of imported.sets){if(typeof s.name!=='string'||!Array.isArray(s.ids))continue;let clean={id:String(s.id||uid()),name:s.name,ids:s.ids.map(String).filter(id=>songBy(id))};let i=data.sets.findIndex(x=>x.id===clean.id);if(i<0)data.sets.push(clean);else data.sets[i]=clean}persist();setPage('library');notify('Biblioteca importada')}else{formSong();$('title').value=f.name.replace(/\.[^.]+$/,'');$('body').value=raw}}catch(err){notify('No s’ha pogut importar: '+err.message)}e.target.value=''};
+function backupList(value, message) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) throw Error(message);
+  return value;
+}
+
+function isBackupId(value) {
+  return typeof value === 'string' || typeof value === 'number';
+}
+
+function backupId(value) {
+  if (value == null || value === '') return uid();
+  if (!isBackupId(value)) throw Error('Identificador incorrecte');
+  return String(value);
+}
+
+function readLibraryBackup(raw) {
+  const backup = JSON.parse(raw);
+  if (!Array.isArray(backup?.songs)) throw Error('Format de biblioteca incorrecte');
+
+  const songs = backup.songs.map((song, index) => {
+    const number = index + 1;
+    if (typeof song?.title !== 'string' || typeof song.text !== 'string') {
+      throw Error('Cançó incorrecta a la posició ' + number);
+    }
+    const versions = backupList(song.versions, 'Llista de versions incorrecta a la cançó ' + number)
+      .map(version => {
+        if (typeof version?.text !== 'string') throw Error('Versió incorrecta a la cançó ' + number);
+        const capo = Number(version.capo);
+        return {
+          id: backupId(version.id),
+          name: String(version.name || 'Versió'),
+          text: version.text,
+          key: String(version.key || ''),
+          capo: Number.isFinite(capo) ? capo : 0
+        };
+      });
+    return {
+      id: backupId(song.id),
+      title: song.title,
+      artist: String(song.artist || ''),
+      key: String(song.key || ''),
+      source: String(song.source || ''),
+      text: song.text,
+      favorite: !!song.favorite,
+      versions
+    };
+  });
+
+  const sets = backupList(backup.sets, 'Llista de repertoris incorrecta').map((set, index) => {
+    if (typeof set?.name !== 'string' || !Array.isArray(set.ids) || !set.ids.every(isBackupId)) {
+      throw Error('Repertori incorrecte a la posició ' + (index + 1));
+    }
+    return {id: backupId(set.id), name: set.name, ids: set.ids.map(String)};
+  });
+  return {songs, sets};
+}
+
+function mergeById(existing, incoming, combine = local => local) {
+  const merged = [...existing];
+  const positions = new Map(existing.map((entry, index) => [entry.id, index]));
+  for (const entry of incoming) {
+    const index = positions.get(entry.id);
+    if (index === undefined) {
+      positions.set(entry.id, merged.length);
+      merged.push(entry);
+    } else {
+      merged[index] = combine(merged[index], entry);
+    }
+  }
+  return merged;
+}
+
+function mergeLibraryBackup(current, backup) {
+  const songs = mergeById(current.songs, backup.songs, (local, incoming) => ({
+    ...local,
+    versions: mergeById(local.versions ?? [], incoming.versions)
+  }));
+  const songIds = new Set(songs.map(song => song.id));
+  const importedSets = backup.sets.map(set => ({
+    ...set,
+    ids: set.ids.filter(id => songIds.has(id))
+  }));
+  const sets = mergeById(current.sets, importedSets, (local, incoming) => {
+    const localIds = new Set(local.ids);
+    const additions = new Set(incoming.ids.filter(id => !localIds.has(id)));
+    return {...local, ids: [...local.ids, ...additions]};
+  });
+  return {...current, songs, sets};
+}
+
+$('file').onchange = async event => {
+  const input = event.target;
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  try {
+    const raw = await file.text();
+    if (/\.json$/i.test(file.name)) {
+      const backup = readLibraryBackup(raw);
+      const nextData = mergeLibraryBackup(data, backup);
+      if (!persist(nextData)) throw Error('El navegador no ha pogut desar la biblioteca');
+      data = nextData;
+      setPage('library');
+      notify('Biblioteca importada');
+    } else {
+      formSong();
+      $('title').value = file.name.replace(/\.[^.]+$/, '');
+      $('body').value = raw;
+    }
+  } catch (error) {
+    notify('No s’ha pogut importar: ' + error.message);
+  }
+};
 const SHAPES={C:'x32010',Cm:'x35543',C7:'x32310',Cmaj7:'x32000',D:'xx0232',Dm:'xx0231',D7:'xx0212',Dmaj7:'xx0222',E:'022100',Em:'022000',E7:'020100',Emaj7:'021100',F:'133211',Fm:'133111',F7:'131211',G:'320003',Gm:'355333',G7:'320001',A:'x02220',Am:'x02210',A7:'x02020',Am7:'x02010',B:'x24442',Bm:'x24432',B7:'x21202',Bb:'x13331',Bbm:'x13321','F#':'244322','F#m':'244222',Ab:'466544',Abm:'466444',Eb:'x65343',Ebm:'x68876',Db:'x46664','C#m':'x46654','G#m':'466444'};
 function getShape(c){let base=c.split('/')[0];if(SHAPES[base])return SHAPES[base].split('');let m=base.match(/^([A-G][#b]?)(m|7|m7)?$/);if(!m)return null;let fret=(PC[m[1]]-4+12)%12;if(fret>8)return null;let intervals=m[2]==='m'?[0,2,2,0,0,0]:m[2]==='7'?[0,2,0,1,0,0]:m[2]==='m7'?[0,2,0,0,0,0]:[0,2,2,1,0,0];return intervals.map(n=>String(n+fret))}
 function diagram(c){let shape=getShape(c);if(!shape)return '<p class="muted">Encara no tenim una digitació per a aquest acord.</p>';let frets=shape.filter(x=>x!=='x'&&+x>0).map(Number),start=Math.min(...frets)>3?Math.min(...frets):1;let svg='<svg viewBox="0 0 180 170" width="180" height="170" style="display:block;margin:auto;color:var(--ink)">';for(let i=0;i<6;i++){let x=30+i*24;svg+=`<line x1="${x}" y1="32" x2="${x}" y2="152" stroke="currentColor"/>`;let f=shape[i];if(f==='x'||f==='0')svg+=`<text x="${x}" y="22" text-anchor="middle" fill="currentColor" font-size="14">${f==='x'?'×':'○'}</text>`;else if(+f>=start&&+f<start+5)svg+=`<circle cx="${x}" cy="${32+(+f-start)*24+12}" r="8" fill="var(--accent)"/>`}for(let i=0;i<6;i++)svg+=`<line x1="30" y1="${32+i*24}" x2="150" y2="${32+i*24}" stroke="currentColor" stroke-width="${i===0&&start===1?4:1}"/>`;if(start>1)svg+=`<text x="5" y="48" fill="currentColor" font-size="12">${start}</text>`;return svg+'</svg><p class="muted" style="text-align:center">E · A · D · G · B · E | '+shape.join(' ')+'</p>'+(c.includes('/')?'<p class="muted">Es mostra l’acord base; el baix de la inversió no està representat.</p>':'')}

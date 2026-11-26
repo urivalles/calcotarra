@@ -11,7 +11,8 @@ Aquest fitxer recull les decisions i preferències vigents per reprendre el proj
 
 ## Arquitectura i dades
 
-- Es manté la PWA estàtica existent i s’evoluciona per etapes. La prioritat actual és protegir l’original, les versions i els repertoris en les importacions. Després es pot separar la interfície, la lògica musical i l’emmagatzematge amb mòduls natius del navegador.
+- Es manté la PWA estàtica existent i s’evoluciona per etapes. L’edició directa de l’original encara ha de conservar una còpia recuperable. La interfície, la lògica musical i l’emmagatzematge es poden separar progressivament amb mòduls natius del navegador.
+- En importar JSON, les entrades existents tenen prioritat en les col·lisions d’identificador. Es poden afegir versions i cançons de repertori noves. La biblioteca s’actualitza després de validar i desar tota la importació.
 - L’aplicació ha de funcionar sense connexió després de la primera càrrega. Es mantenen les rutes relatives, el manifest i la memòria cau dels recursos de l’aplicació. Es prioritzen les API natives i s’eviten les dependències i els serveis de pagament innecessaris.
 - Actualment la biblioteca es desa al navegador, a `localStorage` amb la clau `calcotarra.v1`. La còpia JSON personal es manté a `json/` fora de Git. Les actualitzacions han de conservar les dades i la compatibilitat amb les còpies existents.
 - La biblioteca es trasllada entre dispositius o dominis exportant i important una còpia JSON. La sincronització futura de la biblioteca és una funcionalitat pendent, independent de la sincronització del codi amb GitHub.
