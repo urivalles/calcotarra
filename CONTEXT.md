@@ -8,6 +8,7 @@ Aquest fitxer recull les decisions i preferències vigents per reprendre el proj
 - El mòbil té prioritat. L’aplicació també ha de funcionar bé en tauleta i ordinador. La llegibilitat de la lletra i els acords, els controls durant la interpretació i l’estabilitat guien els canvis visuals.
 - Cada cançó ha de conservar un original recuperable i admetre versions personalitzades. Els favorits i els repertoris formen part de la biblioteca personal.
 - La descoberta obre cerques externes. La importació local i l’enganxat de text permeten afegir contingut que l’usuari tingui dret a fer servir. La importació massiva de dossiers PDF queda per a una fase posterior amb previsualització abans de desar.
+- El tutorial de Biblioteca i Ajustos presenta l’enganxat i els fitxers de text o ChordPro per afegir cançons, i el JSON com a còpia de la biblioteca. L’exemple obre l’editor perquè es pugui provar abans de desar.
 
 ## Arquitectura i dades
 

@@ -18,6 +18,7 @@ Les decisions vigents i les preferències de treball entre ChatGPT, Codex Cloud 
 | Importació i exportació JSON | Parcial | Valida tota la còpia abans de desar-la. Afegeix contingut nou respectant les entrades existents i conserva la biblioteca si falla la validació o el desament. Queda pendent restaurar les preferències que s’inclouen a l’exportació. |
 | Descoberta i importació per enganxat | Implementada | Obre cerques de Google i de Google restringides a Ultimate Guitar. Permet enganxar acords i lletra i anotar-ne la font. |
 | Importació de text i ChordPro | Parcial | Un fitxer de text o ChordPro obre una cançó per revisar. El visor interpreta els acords entre claudàtors. Queda pendent interpretar les metadades i directives de ChordPro. |
+| Tutorial per afegir cançons | Implementada | Accessible des de Biblioteca i Ajustos. Mostra text pla, ChordPro i còpies JSON, amb un exemple que es pot obrir a l’editor. |
 | Importació massiva i dossiers PDF | Pendent | Cal afegir un flux local amb previsualització i revisió abans de desar. |
 
 ### Interpretació
@@ -60,3 +61,4 @@ GitHub Pages continua com a desplegament actiu. Netlify és l’opció preferida
 - En Chromium amb amplades de mòbil i escriptori, s’han comprovat els fluxos de biblioteca, cerca, favorits, versions, repertoris, importació i exportació, transposició, diagrames, desplaçament, mode de concentració, PDF i metrònom. L’afinador ha detectat un senyal simulat de 440 Hz. L’aplicació ha reobert la biblioteca de prova amb el servidor local desconnectat.
 - Al lloc públic s’han comprovat HTTPS, el nom visible, el manifest, les icones, l’activació del service worker i el `404` del JSON personal. No s’han fet servir cançons reals a les proves de navegador.
 - Amb dades sintètiques en Chromium s’ha verificat que els identificadors repetits conserven els originals, les versions i l’ordre del repertori existent. També s’ha comprovat que els JSON invàlids i un error de quota simulat preserven les dades en memòria i desades, fins i tot després d’una altra acció i una recàrrega sense connexió.
+- En Chromium s’ha comprovat el tutorial a 320 px i a mida d’escriptori, l’obertura des de Biblioteca i Ajustos, el mode fosc, el tancament amb Esc i l’accés sense connexió. L’exemple només s’incorpora a la biblioteca quan es desa des de l’editor.

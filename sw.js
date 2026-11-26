@@ -1,5 +1,5 @@
 const CACHE_PREFIX = `calcotarra:${self.registration.scope}:`;
-const CACHE = `${CACHE_PREFIX}2`;
+const CACHE = `${CACHE_PREFIX}3`;
 const FILES = new Set(
   ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png']
     .map(file => new URL(file, self.registration.scope).href)
