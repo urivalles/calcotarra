@@ -2,6 +2,8 @@
 
 Revisat el 26 de novembre de 2026 sobre Calçotarra 0.1 (`c5d5ced`). El desplegament actiu és GitHub Pages des de l’arrel de `main`. [Obre Calçotarra](https://urivalles.github.io/calcotarra/)
 
+Les decisions vigents i les preferències de treball entre ChatGPT, Codex Cloud i VS Code ja es documenten al repositori compartit. [CONTEXT.md](CONTEXT.md) · [AGENTS.md](AGENTS.md)
+
 ## Estat de les funcionalitats
 
 ### Biblioteca, còpies i cerca
